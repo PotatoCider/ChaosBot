@@ -8,10 +8,14 @@ from revChatGPT.revChatGPT import Chatbot
 dotenv.load_dotenv()
 
 
+
 intents = discord.Intents.default()
 intents.message_content = True
 
 client = discord.Client(intents=intents)
+
+MALE = os.environ['MALE'].lower() == 'true'
+display_name = os.environ.get('DISPLAY_NAME')
 
 opts = {}
 
@@ -24,7 +28,10 @@ chatbot = Chatbot(opts)
 
 @client.event
 async def on_ready():
-    print(f'ChaosBot is ready!')
+    global display_name
+    if display_name is None:
+        display_name = client.user.display_name
+    print(f'ChaosBot is ready to act as {display_name}!')
 
 @client.event
 async def on_message(message: discord.Message):
@@ -38,37 +45,43 @@ async def on_message(message: discord.Message):
         print('miss:', n)
         return
 
-    await message.channel.typing()
+    async with message.channel.typing():
+        history = message.channel.history(limit=10)
 
-    history = message.channel.history(limit=10)
+        prompt = ''
 
-    prompt = ''
+        async for msg in history:
+            name = display_name if msg.author == client.user else msg.author.display_name
 
-    async for msg in history:
+            prompt = (
+                name + ': {start}' + 
+                msg.clean_content + '{end}\n' + 
+                prompt
+            )
+
         prompt = (
-            msg.author.display_name + ': {start}' + 
-            msg.clean_content + '{end}\n' + 
-            prompt
+            f"{os.environ.get('DESCRIPTION') or ''} "
+ 
+            f"The character {display_name} in this conversation should only respond once, start {'his' if MALE else 'her'} message with "
+            '{start} and end with {end}.\n\n' +
+            f'The following is a conversation between {display_name} and other people in an online chat room.\n\n' +
+            prompt +
+            display_name + ': '
         )
 
-    prompt = (
-        'The person ChaosBot in this conversation should only respond once, start its message with {start} and end with {end}. ' +
-        'The following is a conversation in Discord chatroom.\n\n' +
-        prompt +
-        'ChaosBot: '
-    )
+        print(prompt)
 
-    response = chatbot.get_chat_response(prompt, output="text")
-    
-    if not response['message']:
-        print('no message:', response)
-        return
-    
-    m = re.search('{start}([\s\S]*){end}', response['message'])
+        response = chatbot.get_chat_response(prompt, output="text")
+        
+        if not response['message']:
+            print('no message:', response)
+            return
+        
+        m = re.search('{start}([\s\S]*){end}', response['message'])
 
-    if not m:
-        print('didnt detect message:', response)
-        return
+        if not m:
+            print('didnt detect message:', response)
+            return
 
     await msg.channel.send(m.groups()[0])
 
