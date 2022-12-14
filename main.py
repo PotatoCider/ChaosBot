@@ -28,10 +28,17 @@ async def on_ready():
 
 @client.event
 async def on_message(message: discord.Message):
+    if message.author == client.user:
+        return
     if message.channel.type not in (discord.ChannelType.text, discord.ChannelType.public_thread, discord.ChannelType.private):
         return
-    if random.randrange(100) != 42:
+
+    n = random.randrange(100)
+    if n != 42:
+        print('miss:', n)
         return
+
+    await message.channel.typing()
 
     history = message.channel.history(limit=10)
 
@@ -45,7 +52,7 @@ async def on_message(message: discord.Message):
         )
 
     prompt = (
-        'The person ChaosBot in this conversation should only respond once and end its message with {end}. ' +
+        'The person ChaosBot in this conversation should only respond once, start its message with {start} and end with {end}. ' +
         'The following is a conversation in Discord chatroom.\n\n' +
         prompt +
         'ChaosBot: '
@@ -57,13 +64,13 @@ async def on_message(message: discord.Message):
         print('no message:', response)
         return
     
-    m = re.search('{start}([\s\S]){end}', response['message'])
+    m = re.search('{start}([\s\S]*){end}', response['message'])
 
     if not m:
         print('didnt detect message:', response)
         return
 
-    msg.channel.send(m.groups()[0])
+    await msg.channel.send(m.groups()[0])
 
 
 client.run(os.environ['TOKEN'])
