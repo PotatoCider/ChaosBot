@@ -25,6 +25,7 @@ CHATGPT_TOKEN=[optional chatgpt session token]
 MALE=<true/false>
 DISPLAY_NAME=[optional display name override, uses bot display name as default]
 DESCRIPTION[optional description about the character your bot is roleplaying as]
+CHANCE=0.05
 ```
 
 Run it
@@ -33,3 +34,7 @@ python3 main.py
 ```
 
 This code is only tested on Arch Linux, and probably won't work after ChatGPT closes their open preview.
+
+## TODO
+[] Add different channel support
+[] Tweak history length

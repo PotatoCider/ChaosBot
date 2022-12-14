@@ -20,6 +20,7 @@ display_name = os.environ.get('DISPLAY_NAME')
 opts = {}
 
 chatgpt_token = os.environ.get('CHATGPT_TOKEN')
+chance_of_response = float(os.environ.get('CHANCE')) or 0.05
 
 if chatgpt_token is not None and chatgpt_token != '':
     opts['session_token'] = chatgpt_token
@@ -40,8 +41,8 @@ async def on_message(message: discord.Message):
     if message.channel.type not in (discord.ChannelType.text, discord.ChannelType.public_thread, discord.ChannelType.private):
         return
 
-    n = random.randrange(100)
-    if n != 42:
+    n = random.random()
+    if n < chance_of_response:
         print('miss:', n)
         return
 
@@ -60,11 +61,12 @@ async def on_message(message: discord.Message):
             )
 
         prompt = (
-            f"{os.environ.get('DESCRIPTION') or ''} "
+            f"{os.environ.get('DESCRIPTION') or ''} " +
  
-            f"The character {display_name} in this conversation should only respond once, start {'his' if MALE else 'her'} message with "
+            f"The following paragraph is a conversation between other people in an online chat room and {display_name} is about to suddenly interrupt them." +
+            f"Because {display_name} is in a online chat room, {'he' if MALE else 'she'} should be responding to them informally. " +
+            f"Start {'his' if MALE else 'her'} message with " +
             '{start} and end with {end}.\n\n' +
-            f'The following is a conversation between {display_name} and other people in an online chat room.\n\n' +
             prompt +
             display_name + ': '
         )
